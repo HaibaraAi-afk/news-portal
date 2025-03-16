@@ -17,6 +17,7 @@ class UserSeeder extends Seeder
             "name" => "Pipecraft",
             "email" => "aku@admin.com",
             "password" => bcrypt("123"),
+            "image" => "/avatar.png",
             "role" => "admin",
         ]);
     }

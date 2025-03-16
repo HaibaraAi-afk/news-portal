@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string('title'); // Judul berita
             $table->text('content'); // Isi berita
             $table->string('image')->nullable(); // Gambar berita (opsional)
+            $table->string('caption')->nullable(); // Keterangan gambar (opsional)
+            $table->enum('category', ['nasional', 'politik', 'kesehatan', 'olahraga', 'ekonomi', 'sains', 'hukum'])->default('nasional'); // Kategori berita
             $table->foreignId('author_id')->constrained('users')->onDelete('cascade'); // Relasi ke tabel users
             $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null'); // Relasi ke tabel users
             $table->timestamp('published_at')->nullable(); // Waktu publikasi

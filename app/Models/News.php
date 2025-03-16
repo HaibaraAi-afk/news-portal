@@ -10,6 +10,9 @@ class News extends Model
         'title',
         'content',
         'author_id',
+        'image',
+        'category_id',
+        'caption',
         'published_at',
         'status',
     ];
