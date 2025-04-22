@@ -9,10 +9,11 @@ use App\Http\Controllers\LikesController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-
-Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/logout', [Authcontroller::class, 'logout']);
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth');
+Route::get('/user', [AuthController::class, 'user'])->middleware('auth');
+Route::get('/check-email', [AuthController::class, 'checkEmail']);
 
 Route::get('/news', [NewsController::class, 'index']);
 Route::post('/news', [NewsController::class, 'store'])->middleware('auth:sanctum');
@@ -29,7 +30,9 @@ Route::get('/news/{id}/views', [ViewsController::class, 'getViews']);
 
 
 Route::get('/', function () {
-    return Inertia::render('welcome');
+    return Inertia::render('homepage1', [
+        'title' => 'NusantaraTimes'
+    ]);
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
