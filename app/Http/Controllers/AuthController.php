@@ -52,6 +52,15 @@ class AuthController extends Controller
         return response()->json(['error' => 'Email or password is incorrect'], 401);
     }
 
+    //Get authenticated user
+    public function checkEmail(Request $request)
+    {
+        $email = $request->query('email');
+        $exists = User::where('email', $email)->exists();
+
+        return response()->json(['exists' => $exists]);
+    }
+
     //Logout user
     public function logout()
     {
