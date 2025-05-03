@@ -1,6 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Head, Link, usePage } from '@inertiajs/react';
 import FormLogin from '../formLogin';
+import CategoryNav from "@/components/CategoryNav";
+import type { SharedData } from '@/types';
+import route from 'ziggy-js'; // Ensure this is the correct import for your project
+
 
 interface User {
   name: string;
@@ -9,11 +13,15 @@ interface User {
   image?: string;
 }
 
-interface PageProps {
-  auth: {
-    user?: User;
-  };
+
+
+interface NewsItem{
+  id: number;
   title: string;
+  content: string;
+  image: string;
+  category: string;
+  published_at: string;
 }
 
 const currentDate = () => {
@@ -24,15 +32,32 @@ const currentDate = () => {
   });
 };
 
-export default function HomePage(props: PageProps) {
-  const { auth, title } = props;
+
+export default function HomePage() {
+  const { auth } = usePage<SharedData>().props;
   const [showFormLogin, setShowFormLogin] = useState(false);
   const [open, setOpen] = useState(false);
+  const [news,  setNews]= useState<NewsItem[]>([]);
+  
+  const handleCategoryClick = (cat: string) => {
+    const category = cat.toLowerCase(); // agar cocok dengan enum di backend
+    fetch(`/api/news/published?category=${category}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          setNews(data.data);
+        }
+      });
+  };
 
+  useEffect(() => {
+    // Fetch berita awal (misalnya kategori 'nasional')
+    handleCategoryClick('Nasional');
+  }, []);
   return (
     <>
       <div className="bg-white text-black px-4 md:px-16 py-6 font-sans">
-        <Head title={props.title} />
+        <Head title="Home Page" />
         <header className="flex justify-between items-center border-b pb-3 mb-3">
           <div className="flex items-center gap-4 border-r pr-4">
             <span className="text-sm text-gray-600">{currentDate()}</span>
@@ -50,7 +75,7 @@ export default function HomePage(props: PageProps) {
                 <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg py-1 z-50">
                   {(auth.user.role === 'admin' || auth.user.role === 'author') && (
                     <Link 
-                      href={auth.user.role === 'admin' ? '/admin' : '/author'}
+                    href={auth.user?.role === 'admin' ? '/Dashboard/Admin/dashboard' : '/dashboard/author/dashboard'}
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       Dashboard
@@ -77,11 +102,8 @@ export default function HomePage(props: PageProps) {
           )}
         </header>
 
-        <nav className="flex justify-center border-b pb-3 gap-5 mb-8 text-sm text-gray-700 font-medium">
-          {["Olahraga", "Politik", "Kesehatan", "Nasional", "Ekonomi", "Sains", "Hukum"].map(cat => (
-            <a key={cat} href="#" className="hover:text-black">{cat}</a>
-          ))}
-        </nav>
+        <CategoryNav onSelectCategory={handleCategoryClick} />
+
 
         <section className="mb-10 grid md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
