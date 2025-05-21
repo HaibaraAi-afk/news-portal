@@ -117,6 +117,8 @@
     "include": [
         "resources/js/**/*.ts",
         "resources/js/**/*.d.ts",
+        "resources/js",
+        "types",
         "resources/js/**/*.tsx", "resources/js/pages/homepage.tsx", "resources/js/form-login.jsx", "resources/js/app.jsx",
     ]
 }
