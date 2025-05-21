@@ -11,24 +11,35 @@ class News extends Model
         'content',
         'author_id',
         'image',
-        'category_id',
+        'category',
         'caption',
         'published_at',
         'status',
     ];
 
-    public function author()
-    {
-        return $this->belongsTo(User::class, 'author_id');
-    }
+    // Removed duplicate author() method
 
     public function likes()
     {
-        return $this->belongsTo(likes::class);
+        return $this->hasMany(likes::class);
     }
 
     public function views()
     {
-        return $this->belongsTo(views::class);
+        return $this->hasMany(views::class);
+    }
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'author_id');
+    }
+
+    public function approver()
+    {
+        return $this->hasMany(User::class, 'approved_by');
+    }
+
+    public function author()
+    {
+        return $this->belongsTo(User::class, 'author_id');
     }
 }
