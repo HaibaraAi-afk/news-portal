@@ -20,13 +20,13 @@ export default function Header({ date }: { date: string }) {
   const { auth } = usePage<SharedData>().props;
 
   return (
-    <div id="header" className="bg-white text-black px-4 md:px-16 py-6 font-sans sticky top-0 z-50 border-b">
+    <div id="header" className="bg-white text-black px-4 md:px-16 py-6 font-sans sticky top-0 z-50">
       {/* Bagian header utama */}
       <div className="flex justify-between items-center pb-3">
         <div className="flex items-center gap-4">
         <span className="text-sm text-gray-600">{currentDate()}</span>
         </div>
-        <h1 className="text-2xl font-bold">NusantaraTimes</h1>
+        <Link href="/" className="text-2xl font-bold">NusantaraTimes</Link>
 
         {/* Auth Section */}
         {auth?.user ? (

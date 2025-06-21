@@ -66,7 +66,7 @@ const FormLogin = ({ onClose }) => {
         <div className="fixed inset-0 bg-transparant bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-md p-6 w-80 relative shadow-xl">
                 <button onClick={onClose} className="absolute top-2 right-3 text-lg">✕</button>
-                <h2 className="text-xl font-extrabold text-center mb-1">NusantaraTimes</h2>
+                <h2 className="text-xl text-black font-extrabold text-center mb-1">NusantaraTimes</h2>
                 <hr className="mb-3" />
                 <p className="text-sm text-center mb-4 font-medium">
                     {step === 'register' ? 'Create Your Account' : step === 'login' ? 'Login to Your Account' : 'Enter Your Email'}
@@ -75,7 +75,7 @@ const FormLogin = ({ onClose }) => {
                 
                 <form onSubmit={step === 'email' ? checkEmail : step === 'login' ? handleLogin : handleRegister}>
                     <div className="mb-4">
-                        <label className="text-sm block mb-1">Email</label>
+                        <label className="text-sm text-black block mb-1">Email</label>
                         <input 
                             type="email" 
                             value={data.email} 
