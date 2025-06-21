@@ -148,6 +148,25 @@
     --sidebar-ring: oklch(0.439 0 0);
 }
 
+
+@layer utilities {
+  .prose {
+    max-width: 100%;
+    line-height: 1.6;
+  }
+  
+  .prose p {
+    margin-bottom: 1em;
+  }
+  
+  .prose img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+  }
+}
+
+
 @layer base {
     * {
         @apply border-border;
