@@ -21,16 +21,12 @@ class News extends Model
 
     public function likes()
     {
-        return $this->hasMany(likes::class);
+        return $this->hasMany(likes::class, 'news_id');
     }
 
     public function views()
     {
-        return $this->hasMany(views::class);
-    }
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'author_id');
+        return $this->hasMany(views::class, 'news_id');
     }
 
     public function approver()
@@ -41,5 +37,17 @@ class News extends Model
     public function author()
     {
         return $this->belongsTo(User::class, 'author_id');
+    }
+
+    // Accessor untuk like count
+    public function getLikesCountAttribute()
+    {
+        return $this->likes()->count();
+    }
+
+    // Accessor untuk view count
+    public function getViewsCountAttribute()
+    {
+        return $this->views()->count();
     }
 }
