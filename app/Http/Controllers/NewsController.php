@@ -49,11 +49,15 @@ class NewsController extends Controller
             'caption' => 'nullable|string',
             'category' => 'required|string',
             'status' => 'required|string|in:draft,pending,approved,rejected',
+            'published_at' => 'nullable|date',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('news_images', 'public');
+        }
+        if ($validated['status'] == 'published' && empty($validated['published_at'])) {
+            $validated['published_at'] = now();
         }
 
         $validated['author_id'] = Auth::id();
@@ -68,10 +72,15 @@ class NewsController extends Controller
      */
     public function show($id)
     {
-        $news = News::with(['author', 'likes', 'views'])->findOrFail($id);
+        $news = News::with(['author', 'likes', 'views'])->find($id);
+
         return response()->json([
             'status' => 'success',
-            'data' => $news,
+            'data' => [
+                ...$news->toArray(),
+                'likes_count' => $news->likes_count,
+                'views_count' => $news->views_count,
+            ]
         ]);
     }
 
@@ -93,18 +102,21 @@ class NewsController extends Controller
         if ($news->author_id != Auth::id()) {
             return response()->json(['message' => 'You are not authorized'], 403);
         }
-
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
             'caption' => 'nullable|string',
             'category' => 'required|string',
             'status' => 'required|string|in:draft,pending,approved,rejected',
+            'published_at' => 'nullable|date',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('news_images', 'public');
+        }
+        if ($validated['status'] == 'published' && empty($validated['published_at'])) {
+            $validated['published_at'] = now();
         }
         $news->update($validated);
 
@@ -141,7 +153,8 @@ class NewsController extends Controller
         $news->approved_by = Auth::id();
 
         if ($status == 'published') {
-            $news->published_at = now();
+            $publishedAt = $request->input('created_at');
+            $news->published_at = $publishedAt ? $publishedAt : now();
         }
 
         $news->save();
@@ -165,8 +178,9 @@ class NewsController extends Controller
             return response()->json(['message' => 'Unauthorized.'], 403);
         }
 
-        if ($news->status !== 'draft') {
-            return response()->json(['message' => 'Berita bukan draft.'], 400);
+        // Allow both draft and rejected status to be sent for approval
+        if (!in_array($news->status, ['draft', 'rejected'])) {
+            return response()->json(['message' => 'Hanya draft atau yang ditolak yang bisa dikirim ulang'], 400);
         }
 
         $news->status = 'pending';
@@ -177,12 +191,20 @@ class NewsController extends Controller
 
 
     // List berita draft milik author
-    public function drafts()
+    public function drafts(Request $request)
     {
-        $statuses = ['draft', 'pending', 'approved', 'rejected'];
+        $status = $request->query('status', 'all');
 
-        $drafts = News::where('author_id', Auth::id())
-            ->whereIn('status', $statuses)
+        $query = News::where('author_id', Auth::id());
+
+        if ($status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        // Sort: Draft first, then Pending, then Approved, then by oldest (created_at ascending)
+        $drafts = $query
+            ->orderByRaw("FIELD(status, 'rejected', 'draft', 'pending', 'approved') asc")
+            ->orderBy('created_at', 'asc')
             ->get();
 
         return Inertia::render('Dashboard/Author/Posts/drafts', [
@@ -195,7 +217,7 @@ class NewsController extends Controller
     {
         $news = News::where('id', $id)
             ->where('author_id', Auth::id())
-            ->where('status', 'draft')
+            ->whereIn('status', ['draft', 'rejected'])
             ->firstOrFail();
 
         return response()->json([
@@ -203,16 +225,17 @@ class NewsController extends Controller
             'title' => $news->title,
             'content' => $news->content,
             'caption' => $news->caption,
-            'category' => $news->category, // Pastikan ini sesuai dengan nilai yang valid
+            'category' => $news->category,
             'created_at' => $news->created_at,
-            'updated_at' => $news->updated_at
+            'updated_at' => $news->updated_at,
+            'published_at' => $news->published_at
         ]);
     }
 
 
     public function getPublishedByCategory(Request $request)
     {
-        $category = ($request->query('category')); // Convert ke lowercase agar cocok dengan enum
+        $category = ($request->query('category'));
 
         $allowedCategories = ['Nasional', 'Politik', 'Kesehatan', 'Olahraga', 'Ekonomi', 'Sains', 'Hukum'];
 
@@ -224,7 +247,7 @@ class NewsController extends Controller
         }
 
         $news = News::with('author')
-            ->where('status', 'published')
+            ->where('status', 'approved')
             ->where('category', $category)
             ->orderBy('published_at', 'desc')
             ->get();
@@ -255,5 +278,67 @@ class NewsController extends Controller
         $categories = ['Nasional', 'Politik', 'Kesehatan', 'Olahraga', 'Ekonomi', 'Sains', 'Hukum'];
 
         return response()->json($categories);
+    }
+
+    public function getPendingNews()
+    {
+        $news = News::with('author')
+            ->where('status', 'pending')
+            ->select(['id', 'title', 'content', 'image', 'author_id', 'category', 'status', 'created_at'])
+            ->get();
+
+        return response()->json(['news' => $news]);
+    }
+
+    public function showByCategory($category)
+    {
+        $categoryFormatted = ucfirst(strtolower($category));
+        $news = News::where('status', 'approved')
+            ->where('category', $categoryFormatted)
+            ->orderBy('published_at', 'desc')
+            ->get();
+
+        return Inertia::render('HomePage', [
+            'news' => $news,
+            'selectedCategory' => $categoryFormatted,
+            'topStories' => $this->getTopStories(),
+            'recentNews' => $this->getRecentNews(),
+            'popularNews' => $this->getPopularNews(),
+            'nasionalNews' => $this->getNasionalNews(),
+        ]);
+    }
+
+    // Add these methods to avoid undefined method errors
+    protected function getTopStories()
+    {
+        return News::where('status', 'approved')
+            ->orderBy('views_count', 'desc')
+            ->take(5)
+            ->get();
+    }
+
+    protected function getRecentNews()
+    {
+        return News::where('status', 'approved')
+            ->orderBy('published_at', 'desc')
+            ->take(5)
+            ->get();
+    }
+
+    protected function getPopularNews()
+    {
+        return News::where('status', 'approved')
+            ->orderBy('likes_count', 'desc')
+            ->take(5)
+            ->get();
+    }
+
+    protected function getNasionalNews()
+    {
+        return News::where('status', 'approved')
+            ->where('category', 'Nasional')
+            ->orderBy('published_at', 'desc')
+            ->take(5)
+            ->get();
     }
 }

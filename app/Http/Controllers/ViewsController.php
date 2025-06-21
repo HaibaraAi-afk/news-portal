@@ -14,17 +14,24 @@ class ViewsController extends Controller
     public function addView($id)
     {
         $news = News::findOrFail($id);
-        $user_id = Auth::id();
 
-        views::create([
-            'news_id' => $news->id,
-            'user_id' => $user_id
-        ]);
+        // Cek existing view dari IP yang sama dalam 24 jam
+        $existingView = views::where('news_id', $news->id)
+            ->where('ip_address', request()->ip())
+            ->where('created_at', '>', now()->subDay())
+            ->exists();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'View added successfully'
-        ]);
+        if (!$existingView) {
+            views::create([
+                'news_id' => $news->id,
+                'ip_address' => request()->ip(),
+                'user_id' => Auth::id()
+            ]);
+
+            News::where('id', $id)->increment('views_count');
+        }
+
+        return response()->noContent();
     }
     //add view count from news
     public function getViews($id)
