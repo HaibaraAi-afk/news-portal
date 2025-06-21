@@ -14,19 +14,23 @@ export default function Tabs() {
   }, [currentUrl]);
 
   return (
-    <div className="bg-gray-200 rounded border-b border-gray-700 flex">
-      <button
-        className={`px-4 py-2 text-sm font-semibold ${
-          active === 'content' ? 'bg-gray-900 text-white' : 'text-black hover:bg-gray-300'
-        }`}
+    <div className="flex border-b bg-white border-gray-200 rounded-t-2xl">
+  <button
+    className={`px-4 py-3 text-sm font-medium ${
+      active === 'content' 
+        ? 'text-blue-600 border-b-2 border-blue-600' 
+        : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
+    }`}
         onClick={() => router.visit('/dashboard/author/posts')}
       >
         Content
-      </button>
-      <button
-        className={`px-4 py-2 text-sm font-semibold ${
-          active === 'drafts' ? 'bg-gray-900 text-white' : 'text-black hover:bg-gray-300'
-        }`}
+  </button>
+  <button
+    className={`px-4 py-3 text-sm font-medium ${
+      active === 'drafts' 
+        ? 'text-blue-600 border-b-2 border-blue-600' 
+        : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
+    }`}
         onClick={() => router.visit('/dashboard/author/posts/drafts')}
       >
         Draft
